@@ -3,7 +3,7 @@
 
 
 const fastify = require('fastify')({trustProxy: true});
-const proxy = require('./src/proxy5.js'); // Import the default export
+const proxy = require('./src/proxy.js'); // Import the default export
 
 const PORT = process.env.PORT || 8080;
 
