@@ -1,3 +1,4 @@
+"use strict";
 const sharp = require('sharp');
 const redirect = require('./redirect');
 
