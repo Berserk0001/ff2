@@ -5,8 +5,8 @@ const redirect = require('./redirect');
 // Configure sharp worker concurrency and caching
 const worker = sharp;
 worker.concurrency(1); // If needed increase to 2 for better performance if the server can handle it
-worker.cache(false);
-
+worker.cache(false); // Disable cache
+//worker.cache({memory: 256, items:2, files: 20}) // Use cache
  async function compress(req, reply, input) {
     const format = 'webp'; // Only use WebP format
    // console.log("QUEUE:: ", worker.counters());
