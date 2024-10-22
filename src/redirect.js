@@ -1,14 +1,17 @@
 "use strict";
-function redirect(req, res) {
-  if (res.headersSent) return;
 
-  res.setHeader('content-length', 0);
-  res.removeHeader('cache-control');
-  res.removeHeader('expires');
-  res.removeHeader('date');
-  res.removeHeader('etag');
-  res.setHeader('location', encodeURI(req.params.url));
-  res.status(302).end();
+function redirect(request, reply) {
+  if (reply.sent) return; // Check if headers have already been sent
+
+  reply
+    .header('content-length', '0')
+    .removeHeader('cache-control')
+    .removeHeader('expires')
+    .removeHeader('date')
+    .removeHeader('etag')
+    .header('location', encodeURI(request.params.url))
+    .code(302)
+    .send(); // Use send to complete the response
 }
 
-module.exports = redirect
+module.exports = redirect;
