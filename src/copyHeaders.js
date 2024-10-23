@@ -1,13 +1,12 @@
 "use strict";
-
-function copyHeaders(source, reply) {
+function copyHeaders(source, target) {
   for (const [key, value] of Object.entries(source.headers)) {
     try {
-      reply.header(key, value); // Use Fastify's reply.header method
+      target.setHeader(key, value)
     } catch (e) {
-      console.log(e.message);
+      console.log(e.message)
     }
   }
 }
 
-module.exports = copyHeaders;
+module.exports = copyHeaders
