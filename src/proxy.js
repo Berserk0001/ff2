@@ -1,4 +1,9 @@
 "use strict";
+/*
+ * proxy.js
+ * The bandwidth hero proxy handler.
+ * proxy(httpRequest, httpResponse);
+ */
 const undici = require("undici");
 const pick = require("lodash").pick;
 const shouldCompress = require("./shouldCompress");
@@ -38,9 +43,24 @@ async function proxy(req, res) {
     });
 
     if (shouldCompress(req)) {
+      /*
+     * sharp support stream. So pipe it.
+     */
       await compress(req, res, responseStream);
     } else {
-      await bypass(req, res, responseStream);
+      /*
+     * Downloading then uploading the buffer to the client is not a good idea though,
+     * It would better if you pipe the incomming buffer to client directly.
+     */
+
+    res.setHeader("x-proxy-bypass", 1);
+
+    for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
+      if (headerName in origin.headers)
+        res.setHeader(headerName, origin.headers[headerName]);
+    }
+
+    return origin.body.pipe(res);
     }
 
   } catch (err) {
