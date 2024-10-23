@@ -1,45 +1,41 @@
-"use strict";
 const sharp = require('sharp');
 const redirect = require('./redirect');
 
-// Configure sharp worker concurrency and caching
-const worker = sharp;
-worker.concurrency(1); // If needed increase to 2 for better performance if the server can handle it
-worker.cache(false); // Disable cache
-//worker.cache({memory: 256, items:2, files: 20}) // Use cache
- async function compress(req, reply, input) {
-    const format = 'webp'; // Only use WebP format
-   // console.log("QUEUE:: ", worker.counters());
-   // console.log(`[COMPRESS] BEGIN: compressing file`);
+// Configure sharp worker concurrency and cache settings
+sharp.concurrency(1);
+sharp.cache({ memory: 256, items: 2, files: 20 });
 
-    await input.pipe(worker({ unlimited: true })
-        .grayscale(req.params.grayscale)
-        .toFormat(format, {
-            quality: req.params.quality,
-           // bitdepth: 8,
-          // compression: 'av1',
-         //   progressive: true,
-          //  optimizeScans: true,
-            effort: 0 // Adjust effort for a balance between speed and quality
-        }))
-        .toBuffer()
-        .then( async(output) => {
-            const metadata = await sharp(output).metadata();
-           // console.log(`[COMPRESS] OK: compressed file sent`);
-            reply
-                .header('content-type', `image/${format}`)
-                .header('content-length', metadata.size)
-                .header('x-original-size', req.params.originSize)
-                .header('x-bytes-saved', req.params.originSize - metadata.size)
-                .code(200)
-                
-                .send(output);
-        })
-        .catch(err => {
-            console.error('Compression error:', { error: err, requestId: req.id }); // More detailed error logging
-            redirect(req, reply);
-            if (input) input.destroy(); // Ensure stream is destroyed on error
-        });
+// Define sharpStream function for reusability
+const sharpStream = () => sharp({ animated: false, unlimited: true });
+
+async function compress(req, res, input) {
+    const format = 'webp'; // Set the output format to WebP
+
+    try {
+        // Create a sharp instance and apply transformations
+        const transform = sharpStream()
+            .grayscale(req.params.grayscale) // Apply grayscale if specified
+            .toFormat(format, {               // Convert image to WebP format
+                quality: req.params.quality,   // Set the quality for compression
+                effort: 0,                     // Use effort=0 for faster compression
+            })
+            .withMetadata();                   // Add image metadata to the output
+
+        // Pipe the input stream through the transform, then collect it into a buffer
+        const output = await transform.toBuffer();
+
+        // Send compressed image as the response with appropriate headers
+        res
+            .setHeader('Content-Type', `image/${format}`)
+            .setHeader('Content-Length', output.length) // Use output buffer's length directly
+            .setHeader('X-Original-Size', req.params.originSize)
+            .setHeader('X-Bytes-Saved', req.params.originSize - output.length) // Calculate bytes saved
+            .status(200)
+            .send(output);
+    } catch (err) {
+        console.error('Compression error:', err);
+        redirect(req, res); // Redirect on error
+    }
 }
 
 module.exports = compress;
