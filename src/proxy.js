@@ -36,12 +36,15 @@ async function proxy(req, res) {
       maxRedirections: 4
     });
 
-    if (response.statusCode >= 400)
-    return redirect(req, res);
+    // Redirect or error for non-success status codes
+    if (response.statusCode >= 400) {
+      return redirect(req, res);
+    }
 
-  // handle redirects
-  if (response.statusCode >= 300 && response.headers.location)
-    return redirect(req, res);
+    // Handle redirects explicitly
+    if (response.statusCode >= 300 && response.headers.location) {
+      return redirect(req, res);
+    }
 
     responseStream = response.body;
     copyHeaders(response, res);
@@ -60,33 +63,39 @@ async function proxy(req, res) {
 
     if (shouldCompress(req)) {
       /*
-     * sharp support stream. So pipe it.
-     */
+       * sharp support stream. So pipe it.
+       */
       await compress(req, res, responseStream);
     } else {
       /*
-     * Downloading then uploading the buffer to the client is not a good idea though,
-     * It would better if you pipe the incomming buffer to client directly.
-     */
+       * Downloading then uploading the buffer to the client is not a good idea though,
+       * It would be better if you pipe the incoming buffer to client directly.
+       */
       res.setHeader("x-proxy-bypass", 1);
 
-    for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
-      if (headerName in response.headers)
-        res.setHeader(headerName, response.headers[headerName]);
-    }
+      for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
+        if (headerName in response.headers)
+          res.setHeader(headerName, response.headers[headerName]);
+      }
 
-    return response.body.pipe(res);
+      return responseStream.pipe(res);
     }
 
   } catch (err) {
-    // Ignore invalid URL.
-  if (err.code === "ERR_INVALID_URL") return res.status(400).send("Invalid URL");
+    // Handle invalid URL error
+    if (err.code === "ERR_INVALID_URL") {
+      return res.status(400).send("Invalid URL");
+    }
 
-  /*
-   * When there's a real error, Redirect then destroy the stream immediately.
-   */
-  redirect(req, res);
-  console.error(err);
+    /*
+     * When there's a real error, Redirect then destroy the socket immediately.
+     */
+    redirect(req, res);
+    console.error(err);
+    
+
+    // Destroy the request socket on error to prevent hanging
+    req.socket.destroy();
   }
 }
 
