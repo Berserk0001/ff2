@@ -1,5 +1,5 @@
 const express = require('express')
-const proxy = require('./src/proxy2')
+const proxy = require('./src/proxy3')
 const params = require('./src/params')
 const app = express()
 

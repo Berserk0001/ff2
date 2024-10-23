@@ -8,7 +8,7 @@ const axios = require('axios');
 const pick = require("lodash").pick;
 const shouldCompress = require("./shouldCompress");
 const redirect = require("./redirect");
-const compress = require("./compress3");
+const compress = require("./compress1");
 const copyHeaders = require("./copyHeaders");
 
 async function proxy(req, res) {
@@ -54,11 +54,7 @@ async function proxy(req, res) {
     // Check if the response should be compressed
     if (shouldCompress(req)) {
       // Compress the response stream
-      return compress(req, res, response)
-        .catch(err => {
-          console.error("Compression error:", err);
-          redirect(req, res);
-        });
+      compress(req, res, response);
     } else {
       // Bypass compression and pipe the original stream directly to the client
       res.setHeader("x-proxy-bypass", 1);
