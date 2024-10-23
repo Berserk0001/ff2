@@ -7,6 +7,10 @@
 const sharp = require('sharp');
 const redirect = require('./redirect');
 
+
+sharp.concurrency(1);
+sharp.cache({ memory: 256, items: 2, files: 20 });
+
 const sharpStream = () => sharp({ animated: !process.env.NO_ANIMATE, unlimited: true });
 
 async function compress(req, res, input) {
