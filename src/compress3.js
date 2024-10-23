@@ -37,6 +37,11 @@ function compress(req, res, input) {
       })
       .toBuffer()
       .then((output, info) => {
+        // Check for errors, missing info, or if headers are already sent
+        if (!info || res.headersSent) {
+          return redirect(req, res);
+        }
+
         res.setHeader('content-type', 'image/' + format);
         res.setHeader('content-length', info.size);
         res.setHeader('x-original-size', req.params.originSize);
@@ -46,7 +51,10 @@ function compress(req, res, input) {
         res.end();
       })
       .catch((err) => {
-        return redirect(req, res);
+        // Check for errors or if headers have already been sent
+        if (err || res.headersSent) {
+          return redirect(req, res);
+        }
       })
   );
 }
