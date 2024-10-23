@@ -19,19 +19,19 @@ async function compress(req, res, input) {
                 quality: req.params.quality,   // Set the quality for compression
                 effort: 0,                     // Use effort=0 for faster compression
             })
-            .withMetadata();                   // Add image metadata to the output
+                              // Add image metadata to the output
 
         // Pipe the input stream through the transform, then collect it into a buffer
-        const output = await transform.toBuffer();
+        const output = await input.body.pipe(transform).toBuffer();
+        const info = await sharp(output).metadata();
 
-        // Send compressed image as the response with appropriate headers
-        res
-            .setHeader('Content-Type', `image/${format}`)
-            .setHeader('Content-Length', output.length) // Use output buffer's length directly
-            .setHeader('X-Original-Size', req.params.originSize)
-            .setHeader('X-Bytes-Saved', req.params.originSize - output.length) // Calculate bytes saved
-            .status(200)
-            .send(output);
+        // Send compressed image as the response with appropriate headers  res.setHeader('content-type', 'image/' + format);
+  res.setHeader('content-length', info.size);
+  res.setHeader('x-original-size', req.params.originSize);
+  res.setHeader('x-bytes-saved', req.params.originSize - info.size);
+  res.status(200);
+  res.write(output);
+  res.end();
     } catch (err) {
         console.error('Compression error:', err);
         redirect(req, res); // Redirect on error
