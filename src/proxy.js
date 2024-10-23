@@ -1,4 +1,9 @@
 "use strict";
+/*
+ * proxy.js
+ * The bandwidth hero proxy handler.
+ * proxy(httpRequest, httpResponse);
+ */
 const undici = require("undici");
 const pick = require("lodash").pick;
 const shouldCompress = require("./shouldCompress");
@@ -31,9 +36,12 @@ async function proxy(req, res) {
       maxRedirections: 4
     });
 
-    if (response.statusCode !== 200) {
-      throw new Error(`Unexpected response status: ${response.statusCode}`);
-    }
+    if (response.statusCode >= 400)
+    return redirect(req, res);
+
+  // handle redirects
+  if (response.statusCode >= 300 && response.headers.location)
+    return redirect(req, res);
 
     responseStream = response.body;
     copyHeaders(response, res);
@@ -51,9 +59,23 @@ async function proxy(req, res) {
     responseStream.on('error', _ => req.socket.destroy());
 
     if (shouldCompress(req)) {
+      /*
+     * sharp support stream. So pipe it.
+     */
       await compress(req, res, responseStream);
     } else {
-      await bypass(req, res, responseStream);
+      /*
+     * Downloading then uploading the buffer to the client is not a good idea though,
+     * It would better if you pipe the incomming buffer to client directly.
+     */
+      res.setHeader("x-proxy-bypass", 1);
+
+    for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
+      if (headerName in response.headers)
+        res.setHeader(headerName, response.headers[headerName]);
+    }
+
+    return response.body.pipe(res);
     }
 
   } catch (err) {
