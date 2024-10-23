@@ -13,7 +13,7 @@ const compress = require("./compress");
 const copyHeaders = require("./copyHeaders");
 
 async function proxy(req, res) {
-  let url = req.query.url;
+/*  let url = req.query.url;
   if (Array.isArray(url)) url = url.join('&url=');
   if (!url) {
     return res.send('bandwidth-hero-proxy');
@@ -23,7 +23,7 @@ async function proxy(req, res) {
   req.params.webp = !req.query.jpeg;
   req.params.grayscale = req.query.bw != 0;
   req.params.quality = parseInt(req.query.l, 10) || 40;
-
+*/
   let responseStream;
   try {
     const response = await undici.request(req.params.url, {
