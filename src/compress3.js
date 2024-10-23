@@ -10,7 +10,7 @@ const redirect = require('./redirect');
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 async function compress(req, res, input) {
-  const format = 'webp';
+  const format = 'avif';
 
   /*
    * Determine the uncompressed image size when there's no content-length header.
@@ -27,7 +27,7 @@ async function compress(req, res, input) {
 
   // Wrap the buffer processing in a promise to use await
   const bufferPromise = new Promise((resolve, reject) => {
-    input.body.pipe(sharpStream()
+    input.data.pipe(sharpStream()
       .grayscale(req.params.grayscale)
       .toFormat(format, {
         quality: req.params.quality,
