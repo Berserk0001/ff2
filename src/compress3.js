@@ -28,27 +28,26 @@ function compress(req, res, input) {
    * |x-original-size|Original photo size                |OriginSize                  |
    * |x-bytes-saved  |Saved bandwidth from original photo|OriginSize - Compressed Size|
    */
-  input.body.pipe(sharpStream()
-    .grayscale(req.params.grayscale)
-    .toFormat(format, {
-      quality: req.params.quality,
-      effort: 0,
-    })
-    .toBuffer()
-    .then((output) => {
-      res.setHeader('content-type', 'image/' + format);
-      res.setHeader('content-length', output.length);
-      res.setHeader('x-original-size', req.params.originSize);
-      res.setHeader('x-bytes-saved', req.params.originSize - output.length);
-      res.status(200);
-      res.write(output);
-      res.end();
-    })
-    .catch((err) => {
-      // Handle error, e.g. log it or return a redirect
-      console.error('Error during compression:', err);
-      return redirect(req, res);
-    })
+  input.body.pipe(
+    sharpStream()
+      .grayscale(req.params.grayscale)
+      .toFormat(format, {
+        quality: req.params.quality,
+        effort: 0,
+      })
+      .toBuffer()
+      .then((output, info) => {
+        res.setHeader('content-type', 'image/' + format);
+        res.setHeader('content-length', info.size);
+        res.setHeader('x-original-size', req.params.originSize);
+        res.setHeader('x-bytes-saved', req.params.originSize - info.size);
+        res.status(200);
+        res.write(output);
+        res.end();
+      })
+      .catch((err) => {
+        return redirect(req, res);
+      })
   );
 }
 
