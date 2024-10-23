@@ -9,12 +9,12 @@ const redirect = require('./redirect');
 
 // Configure sharp worker concurrency and cache settings
 sharp.concurrency(1);
-sharp.cache({ memory: 256, items: 2, files: 20 });
+sharp.cache(false);
 
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 function compress(req, res, input) {
-  const format = 'avif';
+  const format = 'webp';
 
   /*
    * Determine the uncompressed image size when there's no content-length header.
@@ -28,7 +28,7 @@ function compress(req, res, input) {
    * |x-original-size|Original photo size                |OriginSize                  |
    * |x-bytes-saved  |Saved bandwidth from original photo|OriginSize - Compressed Size|
    */
-  input.body.pipe(
+  input.data.pipe(
     sharpStream()
       .grayscale(req.params.grayscale)
       .toFormat(format, {
