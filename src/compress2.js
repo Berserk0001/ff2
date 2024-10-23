@@ -39,12 +39,12 @@ async function compress(req, res, input) {
       }))
       .toBuffer();
 
-    const info = await sharp(output).metadata(); // Get metadata from the output buffer
+    const info = (await sharp(output).metadata()).size; // Get metadata from the output buffer
 
     res.setHeader('content-type', 'image/' + format);
-    res.setHeader('content-length', info.size);
+    res.setHeader('content-length', info);
     res.setHeader('x-original-size', req.params.originSize);
-    res.setHeader('x-bytes-saved', req.params.originSize - info.size);
+    res.setHeader('x-bytes-saved', req.params.originSize - info);
     res.status(200);
     res.write(output);
     res.end();
