@@ -9,43 +9,47 @@ const redirect = require('./redirect');
 
 // Configure sharp worker concurrency and cache settings
 sharp.concurrency(1);
-sharp.cache(false);
+sharp.cache({ memory: 256, items: 2, files: 20 });
 
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 function compress(req, res, input) {
   const format = 'avif';
 
-  // Create the sharp stream and apply transformations
-  const transformer = sharpStream()
+  /*
+   * Determine the uncompressed image size when there's no content-length header.
+   */
+
+  /*
+   * input.pipe => sharp (The compressor) => Send to httpResponse
+   * The following headers:
+   * |  Header Name  |            Description            |           Value            |
+   * |---------------|-----------------------------------|----------------------------|
+   * |x-original-size|Original photo size                |OriginSize                  |
+   * |x-bytes-saved  |Saved bandwidth from original photo|OriginSize - Compressed Size|
+   */
+  input.body.pipe(sharpStream()
     .grayscale(req.params.grayscale)
     .toFormat(format, {
       quality: req.params.quality,
-      effort: 0
-    });
-
-  // Pipe the input stream through sharp, and handle the promise with `.then()` and `.catch()`
-  input.data.pipe(transformer)
+      effort: 0,
+    })
     .toBuffer()
-    .then(outputBuffer => {
-      const originSize = req.params.originSize;
-      const compressedSize = outputBuffer.length;
-
-      // Set headers based on the transformation
-      res.setHeader('content-type', `image/${format}`);
-      res.setHeader('content-length', compressedSize);
-      res.setHeader('x-original-size', originSize);
-      res.setHeader('x-bytes-saved', originSize - compressedSize);
-
-      // Send the compressed image
+    .then((output) => {
+      res.setHeader('content-type', 'image/' + format);
+      res.setHeader('content-length', output.length);
+      res.setHeader('x-original-size', req.params.originSize);
+      res.setHeader('x-bytes-saved', req.params.originSize - output.length);
       res.status(200);
-      res.write(outputBuffer);
+      res.write(output);
       res.end();
     })
-    .catch(err => {
-      console.error("Compression error:", err);
-      redirect(req, res); // Handle error with redirection
-    });
+    .catch((err) => {
+      // Handle error, e.g. log it or return a redirect
+      console.error('Error during compression:', err);
+      return redirect(req, res);
+    })
+  );
 }
 
 module.exports = compress;
