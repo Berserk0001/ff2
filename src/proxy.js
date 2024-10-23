@@ -31,7 +31,10 @@ async function proxy(req, res) {
 
     responseStream = response.body;
     copyHeaders(response, res);
-    res.setHeader('content-encoding', 'identity');
+    res.setHeader("content-encoding", "identity");
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
+  res.setHeader("Cross-Origin-Embedder-Policy", "unsafe-none");
     req.params.originType = response.headers['content-type'] || '';
     req.params.originSize = parseInt(response.headers['content-length'], 10) || 0;
 
