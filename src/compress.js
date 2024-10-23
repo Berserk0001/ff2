@@ -23,12 +23,12 @@ async function compress(req, res, input) {
 
         // Pipe the input stream through the transform, then collect it into a buffer
         const output = await input.body.pipe(transform).toBuffer();
-        const info = await sharp(output).metadata();
+        const info = (await sharp(output).metadata()).size;
 
         // Send compressed image as the response with appropriate headers  res.setHeader('content-type', 'image/' + format);
-  res.setHeader('content-length', info.size);
+  res.setHeader('content-length', info);
   res.setHeader('x-original-size', req.params.originSize);
-  res.setHeader('x-bytes-saved', req.params.originSize - info.size);
+  res.setHeader('x-bytes-saved', req.params.originSize - info);
   res.status(200);
   res.write(output);
   res.end();
