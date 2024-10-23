@@ -7,14 +7,10 @@
 const sharp = require('sharp');
 const redirect = require('./redirect');
 
-// Configure sharp worker concurrency and cache settings
-sharp.concurrency(1);
-sharp.cache({ memory: 256, items: 2, files: 20 });
-
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 async function compress(req, res, input) {
-  const format = 'avif';
+  const format = 'webp';
 
   /*
    * Determine the uncompressed image size when there's no content-length header.
@@ -29,21 +25,30 @@ async function compress(req, res, input) {
    * |x-bytes-saved  |Saved bandwidth from original photo|OriginSize - Compressed Size|
    */
 
-  try {
-    const output = await input.body.pipe(sharpStream()
+  // Wrap the buffer processing in a promise to use await
+  const bufferPromise = new Promise((resolve, reject) => {
+    input.body.pipe(sharpStream()
       .grayscale(req.params.grayscale)
       .toFormat(format, {
         quality: req.params.quality,
         effort: 0,
       }))
-      .toBuffer();
+      .toBuffer((err, output, info) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve({ output, info });
+        }
+      });
+  });
 
-    const info = (await sharp(output).metadata()).size; // Get metadata from the output buffer
+  try {
+    const { output, info } = await bufferPromise;
 
     res.setHeader('content-type', 'image/' + format);
-    res.setHeader('content-length', info);
+    res.setHeader('content-length', info.size);
     res.setHeader('x-original-size', req.params.originSize);
-    res.setHeader('x-bytes-saved', req.params.originSize - info);
+    res.setHeader('x-bytes-saved', req.params.originSize - info.size);
     res.status(200);
     res.write(output);
     res.end();
