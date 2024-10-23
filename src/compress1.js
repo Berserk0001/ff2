@@ -14,7 +14,7 @@ sharp.cache({ memory: 256, items: 2, files: 20 });
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 function compress(req, res, input) {
-  const format = req.params.webp ? 'webp' : 'jpeg';
+  const format = 'avif';
 
   /*
    * Determine the uncompressed image size when there's no content-length header.
@@ -32,8 +32,7 @@ function compress(req, res, input) {
     .grayscale(req.params.grayscale)
     .toFormat(format, {
       quality: req.params.quality,
-      progressive: true,
-      optimizeScans: true
+      effort: 0,
     })
     .toBuffer((err, output, info) => {
       if (err || !info) {

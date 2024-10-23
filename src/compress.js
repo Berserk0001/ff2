@@ -9,7 +9,7 @@ sharp.cache({ memory: 256, items: 2, files: 20 });
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 async function compress(req, res, input) {
-    const format = 'webp'; // Set the output format to WebP
+    const format = 'avif'; // Set the output format to WebP
 
     try {
         // Create a sharp instance and apply transformations
