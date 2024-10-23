@@ -10,7 +10,7 @@ const redirect = require('./redirect');
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
 async function compress(req, res, input) {
-  const format = 'avif';
+  const format = 'webp';
 
   /*
    * Determine the uncompressed image size when there's no content-length header.
