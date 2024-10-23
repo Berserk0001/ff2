@@ -13,7 +13,7 @@ sharp.cache({ memory: 256, items: 2, files: 20 });
 
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
-function compress(req, res, input) {
+async function compress(req, res, input) {
   const format = req.params.webp ? 'webp' : 'jpeg';
 
   /*
@@ -28,26 +28,29 @@ function compress(req, res, input) {
    * |x-original-size|Original photo size                |OriginSize                  |
    * |x-bytes-saved  |Saved bandwidth from original photo|OriginSize - Compressed Size|
    */
-  input.body.pipe(sharpStream()
-    .grayscale(req.params.grayscale)
-    .toFormat(format, {
-      quality: req.params.quality,
-      progressive: true,
-      optimizeScans: true
-    })
-    .toBuffer((err, output, info) => {
-      if (err || !info) {
-        return redirect(req, res);
-      }
 
-      res.setHeader('content-type', 'image/' + format);
-      res.setHeader('content-length', info.size);
-      res.setHeader('x-original-size', req.params.originSize);
-      res.setHeader('x-bytes-saved', req.params.originSize - info.size);
-      res.status(200);
-      res.write(output);
-      res.end();
-    }));
+  try {
+    const output = await input.body.pipe(sharpStream()
+      .grayscale(req.params.grayscale)
+      .toFormat(format, {
+        quality: req.params.quality,
+        progressive: true,
+        optimizeScans: true
+      }))
+      .toBuffer();
+
+    const info = await sharp(output).metadata(); // Get metadata from the output buffer
+
+    res.setHeader('content-type', 'image/' + format);
+    res.setHeader('content-length', info.size);
+    res.setHeader('x-original-size', req.params.originSize);
+    res.setHeader('x-bytes-saved', req.params.originSize - info.size);
+    res.status(200);
+    res.write(output);
+    res.end();
+  } catch (err) {
+    redirect(req, res);
+  }
 }
 
 module.exports = compress;
