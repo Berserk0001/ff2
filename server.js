@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict'
-const cluster = require("cluster");
+/*const cluster = require("cluster");
 
 
 if (cluster.isPrimary) {
@@ -19,7 +19,7 @@ if (cluster.isPrimary) {
   });
 
   return true;
-}
+}*/
 
 
 const express = require('express')
