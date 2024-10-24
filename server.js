@@ -4,7 +4,7 @@ const cluster = require("cluster");
 
 
 
-  const numClusters =2;
+  const numClusters =8;
 
   console.log(`Primary ${process.pid} is running. Will fork ${numClusters} clusters.`);
 
