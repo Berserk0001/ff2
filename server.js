@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict'
 const express = require('express')
-const proxy = require('./src/proxy')
+const proxy = require('./src/proxy4')
 const params = require('./src/params')
 const app = express()
 const PORT = process.env.PORT || 8080;
