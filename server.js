@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 'use strict'
+const compression = require('compression')
 const express = require('express')
 const proxy = require('./src/proxy4')
 const params = require('./src/params')
