@@ -4,6 +4,7 @@ const express = require('express')
 const proxy = require('./src/proxy4')
 const params = require('./src/params')
 const app = express()
+app.use(compression());
 const PORT = process.env.PORT || 8080;
 app.enable('trust proxy');
 app.get('/', params, proxy);
