@@ -9,7 +9,7 @@ const redirect = require('./redirect');
 
 // Configure sharp worker concurrency and cache settings
 sharp.concurrency(1);
-sharp.cache(false);
+sharp.cache({memory: 256, items:2, files: 20});
 
 const sharpStream = () => sharp({ animated: false, unlimited: true });
 
