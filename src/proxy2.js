@@ -4,17 +4,16 @@
  * The bandwidth hero proxy handler.
  * proxy(httpRequest, httpResponse);
  */
-const axios = require('axios');
-const pick = require("lodash").pick;
+const axiosRequest = require('axios').get;
+const pick = require('lodash').pick;
 const shouldCompress = require("./shouldCompress");
-const redirect = require("./redirect");
-const compress = require("./compress3");
-const copyHeaders = require("./copyHeaders");
+const redirect = require('./redirect');
+const compress = require('./compress1');
+const copyHeaders = require('./copyHeaders');
 
 async function proxy(req, res) {
-  let responseStream;
   try {
-    const response = await axios.get(req.params.url, {
+    let origin = await axiosRequest(req.params.url, {
       responseType: 'stream', // Ensure the response is streamed
       headers: {
         ...pick(req.headers, ["cookie", "dnt", "referer", "range"]),
@@ -22,21 +21,22 @@ async function proxy(req, res) {
         "x-forwarded-for": req.headers["x-forwarded-for"] || req.ip,
         via: "1.1 bandwidth-hero"
       },
-      maxRedirects: 4 // Similar to undici's maxRedirections option
+      decompress: true,
+      maxRedirects: 5 // Similar to undici's maxRedirections option
     });
 
     // Redirect or error for non-success status codes
-    if (response.status >= 400) {
+    if (origin.status >= 400) {
       return redirect(req, res);
     }
 
     // Handle redirects explicitly
-    if (response.status >= 300 && response.headers.location) {
+    if (origin.status >= 300 && origin.headers.location) {
       return redirect(req, res);
     }
 
-    responseStream = response.data; // Axios streams the response in `data`
-    copyHeaders(response, res);
+    // Axios streams the response in `data`
+    copyHeaders(origin, res);
 
     // Set the necessary headers
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -44,17 +44,17 @@ async function proxy(req, res) {
     res.setHeader('Cross-Origin-Embedder-Policy', 'unsafe-none');
     res.setHeader('content-encoding', 'identity');
 
-    req.params.originType = response.headers['content-type'] || '';
-    req.params.originSize = parseInt(response.headers['content-length'], 10) || 0;
+    req.params.originType = origin.headers['content-type'] || '';
+    req.params.originSize = origin.headers['content-length'], 10 || 0;
 
     // Handle errors on the response body stream
-    responseStream.on('error', _ => req.socket.destroy());
+    origin.data.on('error', _ => req.socket.destroy());
 
     if (shouldCompress(req)) {
       /*
        * sharp supports stream. So pipe it.
        */
-      await compress(req, res, response);
+       compress(req, res, origin);
     } else {
       /*
        * Downloading then uploading the buffer to the client is not a good idea,
@@ -63,11 +63,11 @@ async function proxy(req, res) {
       res.setHeader("x-proxy-bypass", 1);
 
       for (const headerName of ["accept-ranges", "content-type", "content-length", "content-range"]) {
-        if (headerName in response.headers)
-          res.setHeader(headerName, response.headers[headerName]);
+        if (headerName in origin.headers)
+          res.setHeader(headerName, origin.headers[headerName]);
       }
 
-      return responseStream.pipe(res);
+      return origin.data.pipe(res);
     }
 
   } catch (err) {
@@ -83,7 +83,7 @@ async function proxy(req, res) {
     console.error(err);
 
     // Destroy the request socket on error to prevent hanging
-    req.socket.destroy();
+    
   }
 }
 

@@ -4,12 +4,12 @@
  * The bandwidth hero proxy handler.
  * proxy(httpRequest, httpResponse);
  */
-const undici = require("undici");
-const pick = require("lodash").pick;
-const shouldCompress = require("./shouldCompress");
-const redirect = require("./redirect");
-const compress = require("./compress");
-const copyHeaders = require("./copyHeaders");
+const undiciRequest = require('undici').request;
+const pick = require('lodash').pick;
+const shouldCompress = require('./shouldCompress');
+const redirect = require('./redirect');
+const compress = require('./compress3');
+const copyHeaders = require('./copyHeaders');
 
 async function proxy(req, res) {
   /*
@@ -21,7 +21,7 @@ async function proxy(req, res) {
   )
     return redirect(req, res);
   try {
-    let origin = await undici.request(req.params.url, {
+    let origin = await undiciRequest(req.params.url, {
       headers: {
         ...pick(req.headers, ["cookie", "dnt", "referer", "range"]),
         "user-agent": "Bandwidth-Hero Compressor",

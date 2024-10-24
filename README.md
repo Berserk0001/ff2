@@ -53,7 +53,7 @@ Request URI Example:
 https://bwhero.example.com/?url=https%3A%2F%2Fexample.com%2Fbig_image.jpg&bw=0&l=40
 ```
 
-Response headers:
+originders:
 - `x-original-size`: The original size of the image in bytes
 - `x-bytes-saved`: How many bytes was saved from the original image
 

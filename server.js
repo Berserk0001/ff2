@@ -1,11 +1,3 @@
-const express = require('express')
-const proxy = require('./src/proxy3')
-const params = require('./src/params')
-const app = express()
-
-app.get('/', params, proxy);
-
-
- app.listen(8080, () => {
-      console.log('Server running on port 8080');
-      });
+const app = require('./index');
+const server = require('http').createServer(app);
+server.listen(process.env.PORT || 8080);

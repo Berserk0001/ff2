@@ -22,7 +22,7 @@ async function compress(req, res, input) {
                               // Add image metadata to the output
 
         // Pipe the input stream through the transform, then collect it into a buffer
-        const output = await input.body.pipe(transform).toBuffer();
+        const output = await input.data.pipe(transform).toBuffer();
         const info = (await sharp(output).metadata()).size;
 
         // Send compressed image as the response with appropriate headers  res.setHeader('content-type', 'image/' + format);
