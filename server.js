@@ -3,7 +3,7 @@
 const cluster = require("cluster");
 
 
-if (cluster.isPrimary) {
+
   const numClusters =2;
 
   console.log(`Primary ${process.pid} is running. Will fork ${numClusters} clusters.`);
@@ -18,8 +18,8 @@ if (cluster.isPrimary) {
     cluster.fork();
   });
 
-  return true;
-}
+  
+
 
 
 const express = require('express')
