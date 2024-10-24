@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 'use strict'
-/*const cluster = require("cluster");
+const cluster = require("cluster");
 
 
 if (cluster.isPrimary) {
-  const numClusters = process.env.CLUSTERS || 8;
+  const numClusters =2;
 
   console.log(`Primary ${process.pid} is running. Will fork ${numClusters} clusters.`);
 
@@ -19,7 +19,7 @@ if (cluster.isPrimary) {
   });
 
   return true;
-}*/
+}
 
 
 const express = require('express')
