@@ -23,8 +23,8 @@ function proxy(req, res) {
       "x-forwarded-for": req.headers["x-forwarded-for"] || req.ip,
       via: "1.1 bandwidth-hero"
     },
-    decompress: true,
-    maxRedirects: 4 // Similar to undici's maxRedirections option
+    decompress: false,
+    maxRedirects: 5 // Similar to undici's maxRedirections option
   })
   .then(origin => {
     // Handle non-success status codes
